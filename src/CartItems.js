@@ -2,7 +2,7 @@ import React from 'react';
 import { CartItem } from './CartItem';
 
 
-export const CartItems = ({listOfItems}) => {
+export const CartItems = ({listOfItems, totalPrice}) => {
     return (
         <div className="container">
             <h1>Cart Items</h1>
@@ -14,8 +14,9 @@ export const CartItems = ({listOfItems}) => {
                         <div className="col-md-2">Quantity</div>
                     </div>
                 </div>
-                {listOfItems.map( item => <CartItem item={item} />)}
+                {listOfItems.map( (item) => <CartItem item={item} />)}
             </div>
+            <div>Total Price: ${totalPrice}</div>
         </div>
     )
 }
