@@ -32,10 +32,21 @@ class App extends React.Component {
     );
     await responsePost.json();
 
-    const itemToAddState = Object.assign(
-      {}, {id: this.state.cartItemsList.length + 1, product, quantity}
-    )
-    const copyOfCartItemsList = this.state.cartItemsList.concat(itemToAddState);
+    // notfalls drauf adden...
+    let addedToCartItems = false;
+    let copyOfCartItemsList = this.state.cartItemsList;
+    copyOfCartItemsList.forEach( item => {
+      if (item.product.id == product.id) {
+        Object.assign(item, {quantity: parseInt(item.quantity) + parseInt(quantity)})
+        addedToCartItems = true;
+      }
+    })
+    if (!addedToCartItems) {
+      const itemToAddState = Object.assign(
+        {}, {id: this.state.cartItemsList.length + 1, product, quantity}
+      )
+      copyOfCartItemsList = this.state.cartItemsList.concat(itemToAddState);
+    }
     const totalPrice = this.calculateTotalPrice(copyOfCartItemsList);
     this.setState( {cartItemsList: copyOfCartItemsList, totalPrice} );
   }
