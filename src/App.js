@@ -9,27 +9,11 @@ class App extends React.Component {
   
   constructor() {
     super();
-
     this.state = {
-
-      cartItemsList: [
-        { id: 1, product: { id: 40, name: 'Mediocre Iron Watch', priceInCents: 399 }, quantity: 1 },
-        { id: 2, product: { id: 41, name: 'Heavy Duty Concrete Plate', priceInCents: 499 }, quantity: 2 },
-        { id: 3, product: { id: 42, name: 'Intelligent Paper Knife', priceInCents: 1999 }, quantity: 1 },
-      ],
-      products: [
-        { id: 40, name: 'Mediocre Iron Watch', priceInCents: 399 },
-        { id: 41, name: 'Heavy Duty Concrete Plate', priceInCents: 499 },
-        { id: 42, name: 'Intelligent Paper Knife', priceInCents: 1999 },
-        { id: 43, name: 'Small Aluminum Keyboard', priceInCents: 2500 },
-        { id: 44, name: 'Practical Copper Plate', priceInCents: 1000 },
-        { id: 45, name: 'Awesome Bronze Pants', priceInCents: 399 },
-        { id: 46, name: 'Intelligent Leather Clock', priceInCents: 2999 },
-        { id: 47, name: 'Ergonomic Bronze Lamp', priceInCents: 40000 },
-        { id: 48, name: 'Awesome Leather Shoes', priceInCents: 3990 },
-      ]
+      cartItemsList: [],
+      products: [],
+      totalPrice: 0
     };
-
   }
   
   submitForm = (product, quantity) => {
@@ -39,16 +23,33 @@ class App extends React.Component {
     this.setState( {cartItemsList: this.state.cartItemsList.concat(itemToAdd)} );
   }
 
-  render() {
-
-    const totalPrice = this.state.cartItemsList.reduce((acc, curVal) => {
+  async componentDidMount() {
+    // get cart items
+    const respCartItems = await fetch("http://localhost:8082/api/items");
+    const respCartItemsJson = await respCartItems.json();
+    // get products
+    const respProducts = await fetch("http://localhost:8082/api/products");
+    const respProdJson = await respProducts.json();
+    // join cart items with products on id
+    respCartItemsJson.map( item => {
+      let prodToJoinWith = respProdJson.filter( prod => prod.id === item.product_id)[0];
+      Object.assign(item, { product: prodToJoinWith})
+    })
+    // calculate total price
+    const totalPrice = respCartItemsJson.reduce((acc, curVal) => {
       return acc + curVal.quantity * curVal.product.priceInCents
     }, 0) / 100;
-    
+    console.log(respCartItemsJson);
+    // update state
+    this.setState({cartItemsList: respCartItemsJson, products: respProdJson, totalPrice});
+  }
+
+  render() {
+
     return (
       <div className="App">
         <CartHeader />
-        <CartItems listOfItems={this.state.cartItemsList} totalPrice={totalPrice}/>
+        <CartItems listOfItems={this.state.cartItemsList} totalPrice={this.state.totalPrice}/>
         <AddItem products={this.state.products} onsubmit={this.submitForm} />
         <CartFooter copyright="2021"/>
       </div>
