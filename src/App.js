@@ -14,13 +14,36 @@ class App extends React.Component {
       products: [],
       totalPrice: 0
     };
+    this.addItemToCart = this.addItemToCart.bind(this);
   }
-  
-  submitForm = (product, quantity) => {
-    let itemToAdd = Object.assign(
+
+  async addItemToCart (product, quantity) {
+    let itemToAddServer = {product_id: product.id, quantity, id: this.state.cartItemsList.length + 1};
+    const responsePost = await fetch(
+      "http://localhost:8082/api/items",
+      {
+        method: "POST",
+        body: JSON.stringify(itemToAddServer),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
+      }
+    );
+    await responsePost.json();
+
+    const itemToAddState = Object.assign(
       {}, {id: this.state.cartItemsList.length + 1, product, quantity}
     )
-    this.setState( {cartItemsList: this.state.cartItemsList.concat(itemToAdd)} );
+    const copyOfCartItemsList = this.state.cartItemsList.concat(itemToAddState);
+    const totalPrice = this.calculateTotalPrice(copyOfCartItemsList);
+    this.setState( {cartItemsList: copyOfCartItemsList, totalPrice} );
+  }
+
+  calculateTotalPrice = ( cartItems ) => {
+    return cartItems.reduce((acc, curVal) => {
+      return acc + curVal.quantity * curVal.product.priceInCents
+    }, 0) / 100;
   }
 
   async componentDidMount() {
@@ -31,15 +54,12 @@ class App extends React.Component {
     const respProducts = await fetch("http://localhost:8082/api/products");
     const respProdJson = await respProducts.json();
     // join cart items with products on id
-    respCartItemsJson.map( item => {
+    respCartItemsJson.forEach( item => {
       let prodToJoinWith = respProdJson.filter( prod => prod.id === item.product_id)[0];
       Object.assign(item, { product: prodToJoinWith})
     })
     // calculate total price
-    const totalPrice = respCartItemsJson.reduce((acc, curVal) => {
-      return acc + curVal.quantity * curVal.product.priceInCents
-    }, 0) / 100;
-    console.log(respCartItemsJson);
+    const totalPrice = this.calculateTotalPrice(respCartItemsJson);
     // update state
     this.setState({cartItemsList: respCartItemsJson, products: respProdJson, totalPrice});
   }
@@ -50,7 +70,7 @@ class App extends React.Component {
       <div className="App">
         <CartHeader />
         <CartItems listOfItems={this.state.cartItemsList} totalPrice={this.state.totalPrice}/>
-        <AddItem products={this.state.products} onsubmit={this.submitForm} />
+        <AddItem products={this.state.products} onsubmit={this.addItemToCart} />
         <CartFooter copyright="2021"/>
       </div>
     );

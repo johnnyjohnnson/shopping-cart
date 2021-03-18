@@ -14,7 +14,7 @@ export const CartItems = ({listOfItems, totalPrice}) => {
                         <div className="col-md-2">Quantity</div>
                     </div>
                 </div>
-                {listOfItems.map( (item) => <CartItem item={item} />)}
+                {listOfItems.map( (item, i) => <CartItem key={i} item={item} />)}
             </div>
             <div>Total Price: ${totalPrice}</div>
         </div>
